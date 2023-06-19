@@ -148,35 +148,43 @@ static void ProcessPendingMessages(keyboard_state* keyboardState) {
                         } break;
                         // Temporary solution
                         case 'W': {
-                            UpdateKeyboardKey(&keyboardState->W.isDown, isDown);
+                            UpdateKeyboardKey(&keyboardState->W, isDown);
                         } break;
                         case 'A': {
-                            UpdateKeyboardKey(&keyboardState->A.isDown, isDown);
+                            UpdateKeyboardKey(&keyboardState->A, isDown);
                         } break;
                         case 'S': {
-                            UpdateKeyboardKey(&keyboardState->S.isDown, isDown);
+                            UpdateKeyboardKey(&keyboardState->S, isDown);
                         } break;
                         case 'D': {
-                            UpdateKeyboardKey(&keyboardState->D.isDown, isDown);
+                            UpdateKeyboardKey(&keyboardState->D, isDown);
                         } break;
                         case VK_UP: {
-                            UpdateKeyboardKey(&keyboardState->up.isDown, isDown);
+                            UpdateKeyboardKey(&keyboardState->up, isDown);
                         } break;
                         case VK_DOWN: {
-                            UpdateKeyboardKey(&keyboardState->down.isDown, isDown);
+                            UpdateKeyboardKey(&keyboardState->down, isDown);
                         } break;
                         case VK_LEFT: {
-                            UpdateKeyboardKey(&keyboardState->left.isDown, isDown);
+                            UpdateKeyboardKey(&keyboardState->left, isDown);
                         } break;
                         case VK_RIGHT: {
-                            UpdateKeyboardKey(&keyboardState->right.isDown, isDown);
+                            UpdateKeyboardKey(&keyboardState->right, isDown);
                         } break;
                         case 'P': {
-                            UpdateKeyboardKey(&keyboardState->P.isDown, isDown);
+                            UpdateKeyboardKey(&keyboardState->P, isDown);
                         } break;
                     }
                 }
             }
+            case WM_LBUTTONDOWN:
+            case WM_LBUTTONUP: {
+                UpdateKeyboardKey(&keyboardState->mouseButtonLeft, message.wParam & MK_LBUTTON);
+            } break;
+            case WM_RBUTTONDOWN:
+            case WM_RBUTTONUP: {
+                UpdateKeyboardKey(&keyboardState->mouseButtonRight, message.wParam & MK_RBUTTON);
+            } break;
         }
 
         TranslateMessage(&message);
@@ -255,10 +263,24 @@ int CALLBACK WinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prevInstance, _
 
     g_isRunning = true;
     while (g_isRunning) {
-        for (int32 i = 0; i < ArraySize(keyboardState.keyStates); ++i) { // Hacky solution
-            keyboardState.keyStates[i].didChangeState = false;
+        // Hacky solution
+        for (int32 i = 0; i < ArraySize(keyboardState.keys); ++i) {
+            keyboardState.keys[i].didChangeState = false;
         }
+        keyboardState.mouseButtonLeft.didChangeState  = false;
+        keyboardState.mouseButtonRight.didChangeState = false;
+
         ProcessPendingMessages(&keyboardState);
+
+        POINT mousePos;
+        GetCursorPos(&mousePos);
+        ScreenToClient(g_window, &mousePos);
+        keyboardState.mouseX = mousePos.x;
+        keyboardState.mouseY = mousePos.y;
+
+        if (keyboardState.mouseButtonRight.isDown) {
+            int xxx;
+        }
 
         bitmap_buffer graphicsBuffer = {
             .memory = g_graphicsBuffer.memory,
@@ -341,22 +363,3 @@ void EngineWriteDebugString(const char* str) {
 // etc.
 
 // Additional dependencies: winmm.lib
-
-//void TestRender(win32_bitmap_buffer* graphicsBuffer) {
-//    static int32 xOffset = 0;
-//    static int32 yOffset = 0;
-//    ++xOffset;
-//    ++yOffset;
-//
-//    u8* row = graphicsBuffer->memory;
-//    for (int32 y = 0; y < graphicsBuffer->height; ++y) {
-//        u32* pixel = row;
-//        for (int32 x = 0; x < graphicsBuffer->width; ++x) {
-//            u8 green = x + xOffset;
-//            u8 blue  = y + yOffset;
-//
-//            *pixel++ = (green << 16) | blue;
-//        }
-//        row += graphicsBuffer->pitch;
-//    }
-//}
